@@ -11,41 +11,31 @@
 #include <functional>
 #include <mutex>
 #include <future>
+#include <chrono>
+
+#include <stdio.h>
+#include <time.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+
+#define NUM_OF_CORES 8
+#define MAX_PRIME 100000
 
 using namespace std;
 
-int prime(int a, int b)
+void do_primes()
 {
-    int primes = 0;
-    for (a; a <= b; a++) {
-        int i = 2;
-        while (i <= a) {
-            if (a % i == 0)
-                break;
-            i++;
-        }
-        if (i == a) {
-            primes++;
-        }
+    unsigned long i, num, primes = 0;
+    for (num = 1; num <= MAX_PRIME; ++num) {
+        for (i = 2; (i <= num) && (num % i != 0); ++i);
+        if (i == num)
+            ++primes;
     }
-    return primes;
+    printf("Calculated %d primes.\n", primes);
 }
 
 
-int workConsumingPrime(vector<pair<int, int>>& workQueue, mutex& workMutex)
-{
-    int primes = 0;
-    unique_lock<mutex> workLock(workMutex);
-    while (!workQueue.empty()) {
-        pair<int, int> work = workQueue.back();
-        workQueue.pop_back();
-
-        workLock.unlock(); //< Don't hold the mutex while we do our work.
-        primes += prime(work.first, work.second);
-        workLock.lock();
-    }
-    return primes;
-}
 
 int main(){
   string myString = "";
@@ -65,39 +55,30 @@ int main(){
   outfile.close();//close the binary file
 
 
+  time_t start, end;
+    time_t run_time;
+    unsigned long i;
+    pid_t pids[NUM_OF_CORES];
 
-
-  int nthreads = thread::hardware_concurrency();
-      int limit = 1000000;
-
-      // A place to put work to be consumed, and a synchronisation object to protect it.
-      vector<pair<int, int>> workQueue;
-      mutex workMutex;
-
-      // Put all of the ranges into a queue for the threads to consume.
-      int chunkSize = max(limit / (nthreads*16), 10); //< Handwaving came picking 16 and a good factor.
-      for (int i = 0; i < limit; i += chunkSize) {
-          workQueue.push_back(make_pair(i, min(limit, i + chunkSize)));
-      }
-
-      // Start the threads.
-      vector<future<int>> futures;
-      for (int i = 0; i < nthreads; ++i) {
-          packaged_task<int()> task(bind(workConsumingPrime, ref(workQueue), ref(workMutex)));
-          futures.push_back(task.get_future());
-          thread(move(task)).detach();
-      }
-
-      cout << "Number of logical cores: " << nthreads << "\n";
-      cout << "Calculating number of primes less than " << limit << "... \n";
-
-      // Sum up all the results.
-      int primes = 0;
-      for (future<int>& f : futures) {
-          primes += f.get();
-      }
-
-      cout << "There are " << primes << " prime numbers less than " << limit << ".\n";
-
+    /* start of test */
+    start = time(NULL);
+    for (i = 0; i < NUM_OF_CORES; ++i) {
+        if (!(pids[i] = fork())) {
+            do_primes();
+            exit(0);
+        }
+        if (pids[i] < 0) {
+            perror("Fork");
+            exit(1);
+        }
+    }
+    for (i = 0; i < NUM_OF_CORES; ++i) {
+        waitpid(pids[i], NULL, 0);
+    }
+    end = time(NULL);
+    run_time = (end - start);
+    printf("This machine calculated all prime numbers under %d %d times "
+           "in %d seconds\n", MAX_PRIME, NUM_OF_CORES, run_time);
+    return 0;
 
 }
