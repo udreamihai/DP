@@ -2,6 +2,7 @@
 #include <fstream>
 #include <string>
 #include <bitset>
+#include <cstring>
 
 #include <iostream>
 #include <thread>
@@ -22,19 +23,39 @@
 
 using namespace std;
 
+void xxx(char* buffer, int sz){
+  string filename("out.bin");
+  vector<char> bytes;
+  FILE* input_file = fopen(filename.c_str(), "r");
+  int cursor = 0;//parse the exif_file
+  char exif_file[] = {};
+  unsigned char character = 0;
+  while (!feof(input_file)){
+    character = getc(input_file);
+    exif_file[cursor] = character;
+    cursor++;
+  }
+  exif_file[cursor] = '\0';
+  for (int n=0; n<sizeof(exif_file); n++){
+    buffer[n] = exif_file[n];
+  }
+  fclose(input_file);
+}
+
+
 int prime(int a, int b){
     int primes = 0;
-    for (a; a <= b; a++) {
-        int i = 2;
-        while (i <= a) {
-            if (a % i == 0)
-                break;
-            i++;
-        }
-        if (i == a) {
-            primes++;
-        }
-    }
+      for (a; a <= b; a++) {
+          int i = 2;
+          while (i <= a) {
+              if (a % i == 0)
+                  break;
+              i++;
+          }
+          if (i == a) {
+              primes++;
+          }
+      }
     return primes;
 }
 
@@ -53,7 +74,6 @@ int workConsumingPrime(vector<pair<int, int>>& workQueue, mutex& workMutex)
         pid_t tid;
         tid = syscall(SYS_gettid);
         cout << "Process id " << tid << "\n";
-        //std::this_thread::sleep_for(std::chrono::nanoseconds(5000000000));
         workLock.lock();
     }
     return primes;
@@ -71,12 +91,40 @@ int main(){
   }
   ofstream outfile;
   outfile.open("out.bin");//open the file we will use for exfiltration later
-  for (std::size_t i = 0; i < myString.size(); ++i){ //convert text to binary ready form exfiltration
+  for (std::size_t i = 0; i < myString.size(); ++i){ //convert text to binary ready for exfiltration
+
+    //implement error correction here
+    //hamming code maybe??
+
       outfile << bitset<8>(myString.c_str()[i]);//write the binary into the file out.bin
     }
   outfile.close();//close the binary file
 
-// all god up to this point
+  //move content of out.bin into a vector
+  string filename("out.bin");
+  vector<char> bytes;
+  FILE* input_file = fopen(filename.c_str(), "r");
+  if (input_file == nullptr){
+    return EXIT_FAILURE;
+  }
+  char exif_file[] = {};
+  unsigned char character = 0;
+  int cursor = 0;
+  while (!feof(input_file)){
+    character = getc(input_file);
+    exif_file[cursor] = character;
+    cursor++;
+  }
+  exif_file[cursor] = '\0';
+
+  //let's see the content of the variable - correct
+  cout << strlen(exif_file)-1 << " characters to exfiltrate\n"; //wrong number - sorted
+  cout << "Content of exif_file variable: ";
+  for (int w=0; w<strlen(exif_file)-1; w++){
+    cout << exif_file[w];
+  }
+  cout << "\n";
+// all good up to this point
   int start_s=clock();
 
 
@@ -94,15 +142,16 @@ int main(){
           workQueue.push_back(make_pair(i, min(limit, i + chunkSize)));
       }
 
-      // Start the threads.
-      vector<future<int>> futures;
-      for (int i = 0; i < nthreads; ++i) {
-          packaged_task<int()> task(bind(workConsumingPrime, ref(workQueue), ref(workMutex)));
-          futures.push_back(task.get_future());
-          thread(move(task)).detach();
-          //std::this_thread::sleep_for(std::chrono::nanoseconds(5000000000));
-          //std::terminate();
-      }
+
+
+        // Start the threads.
+        vector<future<int>> futures;
+        for (int i = 0; i < nthreads; ++i) {
+            packaged_task<int()> task(bind(workConsumingPrime, ref(workQueue), ref(workMutex)));
+            futures.push_back(task.get_future());
+            thread(move(task)).detach();
+        }
+
 
       cout << "Number of logical cores used: " << nthreads << "\n";
       cout << "Calculating number of primes less than " << limit << "... \n";
