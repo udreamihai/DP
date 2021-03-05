@@ -74,13 +74,13 @@ int main(){
   }
   cout << "\n";
 // all good up to this point
-  time_t start, end;
+  /*time_t start, end;
   time_t run_time;
   unsigned long i;
   pid_t pids[NUM_OF_CORES];
 
   /* start of test */
-  start = time(NULL);
+/*  start = time(NULL);
   for (i = 0; i < NUM_OF_CORES; ++i) {
       if (!(pids[i] = fork())) {
           primes();
@@ -98,7 +98,7 @@ int main(){
   run_time = (end - start);
   printf("This machine calculated all prime numbers under %d %d times "
          "in %d seconds\n", MAX_PRIME, NUM_OF_CORES, run_time);
-  return 0;
+  return 0;*/
 
 }
 //calculate prime numbers
