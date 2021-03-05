@@ -18,13 +18,13 @@
 #include <unistd.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
-
 #include <ctime>
 #include <sys/wait.h>
 #define NUM_OF_CORES 12
 #define MAX_PRIME 1000000
 
 using namespace std;
+
 
 void primes();
 
@@ -105,7 +105,7 @@ int main(){
 void primes()
 {
     unsigned long i, num, primes = 0;
-    cout << "process id " << getpid() << "\n";
+    cout << "process id " << getpid() << " group id :"<< getgid() << "\n";
     for (num = 1; num <= MAX_PRIME; num++) {
         for (i = 2; (i <= num) && (num % i != 0); i++);
         if (i == num)
