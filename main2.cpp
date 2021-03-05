@@ -20,6 +20,9 @@
 #include <sys/types.h>
 #include <ctime>
 #include <sys/wait.h>
+#include <signal.h>
+#include <unistd.h>
+#include <stdlib.h>
 #define NUM_OF_CORES 12
 #define MAX_PRIME 1000000
 
@@ -27,6 +30,8 @@ using namespace std;
 
 
 void primes();
+void sigusr_handler(int signum);
+void start(vector<int> bits);
 
 int main(){
   string myString = "";
@@ -51,7 +56,7 @@ int main(){
 
   //move content of out.bin into a vector
   string filename("out.bin");
-  vector<char> bytes;
+  vector<int> bytes;
   FILE* input_file = fopen(filename.c_str(), "r");
   if (input_file == nullptr){
     return EXIT_FAILURE;
@@ -74,31 +79,8 @@ int main(){
   }
   cout << "\n";
 // all good up to this point
-  /*time_t start, end;
-  time_t run_time;
-  unsigned long i;
-  pid_t pids[NUM_OF_CORES];
-
-  /* start of test */
-/*  start = time(NULL);
-  for (i = 0; i < NUM_OF_CORES; ++i) {
-      if (!(pids[i] = fork())) {
-          primes();
-          exit(0);
-      }
-      if (pids[i] < 0) {
-          perror("Fork");
-          exit(1);
-      }
-  }
-  for (i = 0; i < NUM_OF_CORES; ++i) {
-      waitpid(pids[i], NULL, 0);
-  }
-  end = time(NULL);
-  run_time = (end - start);
-  printf("This machine calculated all prime numbers under %d %d times "
-         "in %d seconds\n", MAX_PRIME, NUM_OF_CORES, run_time);
-  return 0;*/
+start(bytes);
+return 0;
 
 }
 //calculate prime numbers
@@ -112,4 +94,84 @@ void primes()
             primes++;
     }
     printf("Calculated %d primes.\n", primes);
+}
+
+/**
+ * Register the signal handler for child processes
+ * If SIGUSR1 is received, pause the process,
+ * and if SIGUSR2 is received, continue normal operation
+ */
+void sigusr_handler(int signum)
+{
+    time_t t = std::time(0);
+    tm* now = localtime(&t);
+    if (signum == SIGUSR1) {    // Parent asked it to pause
+        cout<< "I am process with PID: " << getpid() <<
+        " and I am paused right now, time = " << asctime(now);
+        pause();
+    }
+    else if(signum == SIGUSR2) {    // Parent asked it to resume back
+        cout<< "I am process with PID: " << getpid() <<
+        " and I am resumed right now, time = " << asctime(now);
+    }
+}
+
+/**
+ * Takes the bits vector containing 1s and 0s
+ * Creates 10 child processes, and pauses every child for each 1 bit
+ * and resumes them for each 0 bit
+ * After all bits are processed, kills all the child processes
+ */
+void start(vector<int> bits)
+{
+    int num_bits = bits.size();
+    cout << "Would be starting 10 processes,"
+    " anytime enter p to pause all of them, and c to resume" << endl;
+
+    pid_t child_pids[10];   // array of pids of processes being started
+
+    // create 10 child processes using fork()
+    for(int i = 0; i < 10; i++) {
+        child_pids[i] = fork();
+        pid_t PID = child_pids[i];
+        if(PID == 0)    // child[i]
+        {
+            signal(SIGUSR1, sigusr_handler);    // register signal handler for pausing on SIGUSR1
+            signal(SIGUSR2, sigusr_handler);    // register signal handler for resuming on SIGUSR2
+            while(1) {      // until signal comes, keep looping
+                cout<< "I am process with PID: " << getpid() <<
+                " and I am alive right now" <<endl;
+                primes(); //overload CPU cores
+            }
+        }
+        else if(PID<0)
+        {       // faced an error
+            cout<<"Error occured while forking process no: " << i+1 <<endl;
+            exit(1);
+        }
+    }
+    // parent process sleeps initially for sometime to let child's signal handlers get registered
+    usleep(5 * 1e6 /*seconds to us*/);
+    int i;
+    for(i = 0; i < num_bits; i++) {
+        int b = bits[i];
+        if(b == 1) {    // pause for every 1 bit
+            for(pid_t pid : child_pids) {
+                kill(pid, SIGUSR1);
+            }
+        }
+        else if(b == 0) {
+            // resume everyone for every 0 bit
+            for(pid_t pid : child_pids) {
+                kill(pid, SIGUSR2);
+            }
+        }
+        // take a break for 5s to allow signals to be delivered
+        usleep(5 * 1e6 /*seconds to us*/);
+    }
+    // after all bits, kill/terminate all child processes
+    usleep(5 * 1e6 /*seconds to us*/);
+    for(pid_t pid : child_pids) {
+        kill(pid, SIGTERM);
+    }
 }
