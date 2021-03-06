@@ -109,13 +109,11 @@ void sigusr_handler(int signum)
     time_t t = std::time(0);
     tm* now = localtime(&t);
     if (signum == SIGUSR1) {    // Parent asked it to pause
-        cout<< "I am process with PID: " << getpid() <<
-        " and I am paused right now, time = " << asctime(now);
+        cout<< "I am process with PID: " << getpid() << " killed at " << asctime(now);
         pause();
     }
     else if(signum == SIGUSR2) {    // Parent asked it to resume back
-        cout<< "I am process with PID: " << getpid() <<
-        " and I am resumed right now, time = " << asctime(now);
+        cout<< "I am process with PID: " << getpid() << " resumed at " << asctime(now);
     }
 }
 
@@ -128,8 +126,6 @@ void sigusr_handler(int signum)
 void start(vector<int> bits)
 {
     int num_bits = bits.size();
-    cout << "Would be starting 10 processes,"
-    " anytime enter p to pause all of them, and c to resume" << endl;
 
     pid_t child_pids[10];   // array of pids of processes being started
 
@@ -142,8 +138,7 @@ void start(vector<int> bits)
             signal(SIGUSR1, sigusr_handler);    // register signal handler for pausing on SIGUSR1
             signal(SIGUSR2, sigusr_handler);    // register signal handler for resuming on SIGUSR2
             while(1) {      // until signal comes, keep looping
-                cout<< "I am process with PID: " << getpid() <<
-                " and I am alive right now" <<endl;
+                //cout<< "I am process with PID: " << getpid() << " and I am alive right now" <<endl;
                 primes(); //overload CPU cores
             }
         }
@@ -161,16 +156,27 @@ void start(vector<int> bits)
         if(b == 1) {    // pause for every 1 bit
             for(pid_t pid : child_pids) {
                 kill(pid, SIGUSR1);
+                cout << "pause 10 seconds" << endl;
+
+            }
+            usleep(10 * 1e6);
+            for(pid_t pid : child_pids) {
+                kill(pid, SIGUSR2);
             }
         }
         else if(b == 0) {
             // resume everyone for every 0 bit
             for(pid_t pid : child_pids) {
+                kill(pid, SIGUSR1);
+                cout << "pause 5 seconds" << endl;
+            }
+            usleep(5 * 1e6);
+            for(pid_t pid : child_pids) {
                 kill(pid, SIGUSR2);
             }
         }
-        // take a break for 1s to allow signals to be delivered
-        usleep(1 * 1e6 /*seconds to us*/);
+        // take a break for 5s to allow signals to be delivered
+        usleep(5 * 1e6 /*seconds to us*/);
     }
     // after all bits, kill/terminate all child processes
     usleep(5 * 1e6 /*seconds to us*/);
