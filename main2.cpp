@@ -9,6 +9,7 @@
 #include <vector>
 #include <utility>
 #include <algorithm>
+#include <iterator>
 #include <functional>
 #include <mutex>
 #include <future>
@@ -48,36 +49,38 @@ int main(){
   for (std::size_t i = 0; i < myString.size(); ++i){ //convert text to binary ready for exfiltration
 
     //implement error correction here
-    //hamming code maybe??
+    //BCH(16,12) ??
 
       outfile << bitset<8>(myString.c_str()[i]);//write the binary into the file out.bin
     }
   outfile.close();//close the binary file
 
   //move content of out.bin into a vector
-  string filename("out.bin");
-  vector<int> bytes;
-  FILE* input_file = fopen(filename.c_str(), "r");
-  if (input_file == nullptr){
-    return EXIT_FAILURE;
-  }
-  char exif_file[] = {};
-  unsigned char character = 0;
-  int cursor = 0;
-  while (!feof(input_file)){
-    character = getc(input_file);
-    exif_file[cursor] = character;
-    cursor++;
-  }
-  exif_file[cursor] = '\0';
+   string filename("out.bin");
+   vector<int> bytes{};
+   FILE* input_file = fopen(filename.c_str(), "r");
+   if (input_file == nullptr){
+     return EXIT_FAILURE;
+   }
+   unsigned char character = 0;
+   int cursor = 0;
+   while (!feof(input_file)){
+     character = getc(input_file);
+     //bytes[cursor] = character;
+     cout << "file content: " << character;
+     int character2 = character - '0';
+     bytes.push_back(character2);
+     cout << "; bytes content: " << bytes[cursor] << endl;
+     cursor++;
+   }
+   bytes[cursor] = '\0';
+   cout << endl;
+   // Print all elements in vector
+   std::copy(  bytes.begin(),
+               bytes.end(),
+               std::ostream_iterator<int>(std::cout," "));
+   std::cout<<std::endl;
 
-  //let's see the content of the variable - correct
-  cout << strlen(exif_file)-1 << " characters to exfiltrate\n"; //wrong number - sorted
-  cout << "Content of exif_file variable: ";
-  for (int w=0; w<strlen(exif_file)-1; w++){
-    cout << exif_file[w];
-  }
-  cout << "\n";
 // all good up to this point
 start(bytes);
 return 0;
@@ -151,7 +154,7 @@ void start(vector<int> bits)
         }
     }
     // parent process sleeps initially for sometime to let child's signal handlers get registered
-    usleep(5 * 1e6 /*seconds to us*/);
+    usleep(0.5 * 1e6 /*seconds to us*/);
     int i;
     for(i = 0; i < num_bits; i++) {
         int b = bits[i];
@@ -166,8 +169,8 @@ void start(vector<int> bits)
                 kill(pid, SIGUSR2);
             }
         }
-        // take a break for 5s to allow signals to be delivered
-        usleep(5 * 1e6 /*seconds to us*/);
+        // take a break for 1s to allow signals to be delivered
+        usleep(1 * 1e6 /*seconds to us*/);
     }
     // after all bits, kill/terminate all child processes
     usleep(5 * 1e6 /*seconds to us*/);
