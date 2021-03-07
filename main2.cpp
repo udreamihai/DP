@@ -66,14 +66,11 @@ int main(){
    int cursor = 0;
    while (!feof(input_file)){
      character = getc(input_file);
-     //bytes[cursor] = character;
-     //cout << "file content: " << character;
-     int character2 = character - '0';
+     int character2 = character - '0';//char to int conversion
      bytes.push_back(character2);
-     //cout << "; bytes content: " << bytes[cursor] << endl;
      cursor++;
    }
-   bytes[cursor] = '\0';
+   //bytes[cursor] = '\0';
    cout << endl;
    // Print all elements in vector to double check
    std::copy(  bytes.begin(),
