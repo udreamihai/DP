@@ -67,10 +67,10 @@ int main(){
    while (!feof(input_file)){
      character = getc(input_file);
      //bytes[cursor] = character;
-     cout << "file content: " << character;
+     //cout << "file content: " << character;
      int character2 = character - '0';
      bytes.push_back(character2);
-     cout << "; bytes content: " << bytes[cursor] << endl;
+     //cout << "; bytes content: " << bytes[cursor] << endl;
      cursor++;
    }
    bytes[cursor] = '\0';
@@ -172,8 +172,8 @@ void start(vector<int> bits)
                 kill(pid, SIGUSR2);
             }
         }
-        //take a break for 5s to allow signals to be delivered
-        usleep(5 * 1e6);
+        //take a break for 1s to allow signals to be delivered
+        usleep(1 * 1e6);
     }
     //after all bits, kill/terminate all child processes
     usleep(5 * 1e6);
