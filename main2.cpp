@@ -149,6 +149,8 @@ void start(vector<int> bits)
         }
     }
     // parent process sleeps initially for sometime to let child's signal handlers get registered
+    // One Process to rule them all, One Process to find them,
+    // One Process to bring them all, and in the darkness bind them
     usleep(0.5 * 1e6 /*seconds to us*/);
     int i;
     for(i = 0; i < num_bits; i++) {
