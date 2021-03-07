@@ -107,7 +107,7 @@ void sigusr_handler(int signum)
 {
     time_t t = std::time(0);
     tm* now = localtime(&t);
-    if (signum == SIGUSR1) {    //signelled to pause
+    if (signum == SIGUSR1) {    //signalled to pause
         cout<< "I am process with PID: " << getpid() << " killed at " << asctime(now);
         pause();
     }
@@ -154,7 +154,7 @@ void start(vector<int> bits)
         if(b == 1) {    //pause for every 1 bit
             for(pid_t pid : child_pids) {
                 kill(pid, SIGUSR1);
-                cout << "pause 10 seconds" << endl;
+                cout << "spike CPU for 10 seconds" << endl;
 
             }
             usleep(10 * 1e6);
@@ -165,17 +165,17 @@ void start(vector<int> bits)
         else if(b == 0) { //pause for every 0 bit
             for(pid_t pid : child_pids) {
                 kill(pid, SIGUSR1);
-                cout << "pause 5 seconds" << endl;
+                cout << "spike CPU for 5 seconds" << endl;
             }
             usleep(5 * 1e6);
             for(pid_t pid : child_pids) {
                 kill(pid, SIGUSR2);
             }
         }
-        // take a break for 5s to allow signals to be delivered
+        //take a break for 5s to allow signals to be delivered
         usleep(5 * 1e6);
     }
-    // after all bits, kill/terminate all child processes
+    //after all bits, kill/terminate all child processes
     usleep(5 * 1e6);
     for(pid_t pid : child_pids) {
         kill(pid, SIGTERM);
