@@ -1,3 +1,11 @@
+/**
+ * File: main2.cpp
+ * Author: Mihai Udrea
+ * Date: 2021
+ * Module: Digital Project
+ * Desc: Data exfiltration via power lines
+ * Copyright: University of West of England 2021
+ */
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -32,7 +40,7 @@ using namespace std;
 
 void primes();
 void sigusr_handler(int signum);
-void start(vector<int> bits);
+void start_spikes(vector<int> bits);
 
 int main(){
   string myString = "";
@@ -79,7 +87,7 @@ int main(){
    std::cout<<std::endl;
 
 // all good up to this point
-start(bytes);
+start_spikes(bytes);
 return 0;
 
 }
@@ -98,8 +106,7 @@ void primes()
 
 //Register the signal handler for child processes
 //If SIGUSR1 is received, pause the process,
-//and if SIGUSR2 is received, continue normal operation
-
+//and if SIGUSR2 is received, continue
 void sigusr_handler(int signum)
 {
     time_t t = std::time(0);
@@ -116,8 +123,7 @@ void sigusr_handler(int signum)
 //Takes the bits vector containing 1s and 0s
 //Creates child processes, and pauses every child for each 1 and 0 bit
 //After all bits are processed, kills all the child processes
-
-void start(vector<int> bits)
+void start_spikes(vector<int> bits)
 {
     int num_bits = bits.size();
 
@@ -151,10 +157,10 @@ void start(vector<int> bits)
         if(b == 1) {    //pause for every 1 bit
             for(pid_t pid : child_pids) {
                 kill(pid, SIGUSR1);
-                cout << "spike CPU for 10 seconds" << endl;
+                cout << "spike CPU for 4 seconds" << endl;
 
             }
-            usleep(10 * 1e6);
+            usleep(4 * 1e6);
             for(pid_t pid : child_pids) {
                 kill(pid, SIGUSR2);
             }
@@ -162,9 +168,9 @@ void start(vector<int> bits)
         else if(b == 0) { //pause for every 0 bit
             for(pid_t pid : child_pids) {
                 kill(pid, SIGUSR1);
-                cout << "spike CPU for 5 seconds" << endl;
+                cout << "spike CPU for 2 seconds" << endl;
             }
-            usleep(5 * 1e6);
+            usleep(2 * 1e6);
             for(pid_t pid : child_pids) {
                 kill(pid, SIGUSR2);
             }
