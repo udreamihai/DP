@@ -85,10 +85,10 @@ int main(){
    //bytes[cursor] = '\0';
    cout << endl;
    // Print all elements in vector to double check
-   std::copy(  bytes.begin(),
-               bytes.end(),
-               std::ostream_iterator<int>(std::cout," "));
-   std::cout<<std::endl;
+   //std::copy(  bytes.begin(),
+  //             bytes.end(),
+  //             std::ostream_iterator<int>(std::cout," "));
+  // std::cout<<std::endl;
 
 // all good up to this point
 start_spikes(bytes);
@@ -99,13 +99,13 @@ return 0;
 void primes()
 {
     unsigned long i, num, primes = 0;
-    cout << "process id " << getpid() << " group id :"<< getgid() << "\n";
+    //cout << "process id " << getpid() << " group id :"<< getgid() << "\n";
     for (num = 1; num <= MAX_PRIME; num++) {
         for (i = 2; (i <= num) && (num % i != 0); i++);
         if (i == num)
             primes++;
     }
-    printf("Calculated %d primes.\n", primes);
+    //printf("Calculated %d primes.\n", primes);
 }
 
 //Register the signal handler for child processes
@@ -159,7 +159,7 @@ void start_spikes(vector<int> bits)
     for(i = 0; i < num_bits; i++) {
         int b = bits[i];
         if(b == 1) {    //pause for every 1 bit
-          cout << "spike CPU for 4 seconds" << endl;
+          //cout << "spike CPU for 4 seconds" << endl;
             for(pid_t pid : child_pids) {
                 kill(pid, SIGUSR1);
                 //cout << "spike CPU for 4 seconds" << endl;
@@ -171,7 +171,7 @@ void start_spikes(vector<int> bits)
             }
         }
         else if(b == 0) { //pause for every 0 bit
-          cout << "spike CPU for 2 seconds" << endl;
+          //cout << "spike CPU for 2 seconds" << endl;
             for(pid_t pid : child_pids) {
                 kill(pid, SIGUSR1);
                 //cout << "spike CPU for 2 seconds" << endl;
