@@ -64,6 +64,7 @@ int main(){
 
       outfile << bitset<8>(myString.c_str()[i]);//write the binary into the file out.bin
     }
+    outfile << "1";
   outfile.close();//close the binary file
 
   //move content of out.bin into a vector
